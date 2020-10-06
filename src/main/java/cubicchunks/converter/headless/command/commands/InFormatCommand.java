@@ -21,15 +21,31 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.gui;
+package cubicchunks.converter.headless.command.commands;
 
-import java.awt.EventQueue;
-import java.io.IOException;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import cubicchunks.converter.headless.command.HeadlessCommandContext;
 
-public class ConverterGui {
-
-    public static void main(String... args) throws IOException, InterruptedException {
-        EventQueue.invokeLater(() -> new GuiFrame().init());
-        Thread.sleep(Long.MAX_VALUE);
+public class InFormatCommand {
+    public static void register(CommandDispatcher<HeadlessCommandContext> dispatcher) {
+        dispatcher.register(LiteralArgumentBuilder.<HeadlessCommandContext>literal("inFormat")
+            .then(LiteralArgumentBuilder.<HeadlessCommandContext>literal("Anvil")
+                .executes((context) -> {
+                    context.getSource().setInFormat("Anvil");
+                    return 1;
+                })
+            ).then(LiteralArgumentBuilder.<HeadlessCommandContext>literal("CubicChunks")
+                .executes((context) -> {
+                    context.getSource().setInFormat("CubicChunks");
+                    return 1;
+                })
+            ).then(LiteralArgumentBuilder.<HeadlessCommandContext>literal("RobintonCubicChunks")
+                .executes((context) -> {
+                    context.getSource().setInFormat("RobintonCubicChunks");
+                    return 1;
+                })
+            )
+        );
     }
 }

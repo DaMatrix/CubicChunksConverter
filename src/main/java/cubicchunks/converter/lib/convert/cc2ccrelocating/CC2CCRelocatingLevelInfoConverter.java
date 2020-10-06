@@ -21,15 +21,35 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.lib.convert.cc2ccrelocating;
 
-public interface IProgressListener {
+import cubicchunks.converter.lib.Dimensions;
+import cubicchunks.converter.lib.convert.LevelInfoConverter;
+import cubicchunks.converter.lib.convert.data.CubicChunksColumnData;
+import cubicchunks.converter.lib.util.Utils;
 
-    void update();
+import java.io.IOException;
+import java.nio.file.Path;
 
-    ErrorHandleResult error(Throwable t);
+public class CC2CCRelocatingLevelInfoConverter implements LevelInfoConverter<CubicChunksColumnData, CubicChunksColumnData> {
 
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+    private final Path srcDir;
+    private final Path dstDir;
+
+    public CC2CCRelocatingLevelInfoConverter(Path srcDir, Path dstDir) {
+        this.srcDir = srcDir;
+        this.dstDir = dstDir;
+    }
+
+    @Override public void convert() throws IOException {
+        Utils.createDirectories(dstDir);
+        Utils.copyEverythingExcept(srcDir, srcDir, dstDir, file ->
+                        Dimensions.getDimensions().stream().anyMatch(dim ->
+                                srcDir.resolve(dim.getDirectory()).resolve("region2d").equals(file) ||
+                                        srcDir.resolve(dim.getDirectory()).resolve("region3d").equals(file)
+                        ),
+                f -> {
+                } // TODO: counting files
+        );
     }
 }

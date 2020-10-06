@@ -9,6 +9,9 @@ buildscript {
         maven {
             setUrl("https://plugins.gradle.org/m2/")
         }
+        maven {
+            setUrl("https://libraries.minecraft.net")
+        }
     }
     dependencies {
         classpath("org.ajoberstar:grgit:1.4.+")
@@ -52,16 +55,17 @@ repositories {
 
 dependencies {
     compile("com.flowpowered:flow-nbt:1.0.1-SNAPSHOT")
-    compile("io.github.opencubicchunks:regionlib:0.60.0-SNAPSHOT")
+    compile("io.github.opencubicchunks:regionlib:0.63.0-SNAPSHOT")
     compile("com.carrotsearch:hppc:0.8.1")
     compile("com.google.guava:guava:27.0.1-jre")
+    compile("com.mojang:brigadier:1.0.17")
     compile(project(":nbt"))
     testCompile("junit:junit:4.11")
 }
 
 jar.apply {
     manifest.apply {
-        attributes["Main-Class"] = "cubicchunks.converter.gui.ConverterGui"
+        attributes["Main-Class"] = "cubicchunks.converter.gui.GuiMain"
     }
 }
 /*
@@ -74,8 +78,25 @@ val sourcesJar by tasks.creating(Jar::class) {
     from(sourceSets["main"].java.srcDirs)
 }
 
+val headlessJar by tasks.creating(Jar::class) {
+    classifier = "headless"
+    from(sourceSets["main"].java.srcDirs)
+    exclude("cubicchunks/converter/gui")
+    manifest.apply {
+        attributes["Main-Class"] = "cubicchunks.converter.headless.HeadlessMain"
+    }
+}
 
-tasks["build"].dependsOn(shadowJar)
+val headlessShadowJar by tasks.creating(ShadowJar::class) {
+    dependsOn(headlessJar)
+    manifest.inheritFrom(headlessJar.manifest)
+    from(java.sourceSets["main"].output)
+    configurations.add(project.configurations.runtime)
+    exclude("META-INF/INDEX.LIST", "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "cubicchunks/converter/gui")
+    classifier = "headless-all"
+}
+
+tasks["build"].dependsOn(shadowJar, headlessShadowJar)
 
 val signing: SigningExtension by extensions
 signing.apply {
@@ -155,7 +176,7 @@ uploadArchives.apply {
 // tasks must be before artifacts, don't change the order
 artifacts {
     withGroovyBuilder {
-        "archives"(tasks["jar"], shadowJar, sourcesJar)
+        "archives"(jar, shadowJar, headlessJar, headlessShadowJar, sourcesJar)
     }
 }
 

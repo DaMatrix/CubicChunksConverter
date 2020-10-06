@@ -21,15 +21,31 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.headless;
 
-public interface IProgressListener {
+import java.util.ArrayList;
+import java.util.List;
 
-    void update();
+public class HeadlessMain {
 
-    ErrorHandleResult error(Throwable t);
+    public static void main(String[] args) {
+        boolean acceptingCommands = false;
 
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+        List<String> commands = new ArrayList<>();
+
+        for(String arg : args) {
+            if(acceptingCommands)
+                commands.add(arg);
+            else if (arg.equals("--"))
+                acceptingCommands = true;
+            else if (!arg.equals("--headless")) {
+                throw new IllegalArgumentException("Unknown argument: " + arg);
+            }
+        }
+        if(commands.isEmpty())
+            HeadlessConverter.convert();
+        else
+            HeadlessConverter.convert(commands);
+
     }
 }

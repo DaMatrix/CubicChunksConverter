@@ -21,15 +21,26 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.headless.command.commands;
 
-public interface IProgressListener {
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import cubicchunks.converter.headless.command.HeadlessCommandContext;
 
-    void update();
-
-    ErrorHandleResult error(Throwable t);
-
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+public class OutFormatCommand {
+    public static void register(CommandDispatcher<HeadlessCommandContext> dispatcher) {
+        dispatcher.register(LiteralArgumentBuilder.<HeadlessCommandContext>literal("outFormat")
+            .then(LiteralArgumentBuilder.<HeadlessCommandContext>literal("Anvil")
+                .executes((context) -> {
+                    context.getSource().setOutFormat("Anvil");
+                    return 1;
+                })
+            ).then(LiteralArgumentBuilder.<HeadlessCommandContext>literal("CubicChunks")
+                .executes((context) -> {
+                    context.getSource().setOutFormat("CubicChunks");
+                    return 1;
+                })
+            )
+        );
     }
 }

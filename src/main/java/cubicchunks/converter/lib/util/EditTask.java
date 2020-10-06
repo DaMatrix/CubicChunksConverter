@@ -21,15 +21,31 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.lib.util;
 
-public interface IProgressListener {
+public final class EditTask {
+    private final BoundingBox source;
+    private final Vector3i offset;
 
-    void update();
+    public enum Type {NONE, CUT, COPY, MOVE, REMOVE, KEEP}
 
-    ErrorHandleResult error(Throwable t);
+    private final Type type;
 
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+    public EditTask(BoundingBox src, Vector3i offset, Type type) {
+        this.source = src;
+        this.offset = offset;
+        this.type = type;
+    }
+
+    public BoundingBox getSourceBox() {
+        return this.source;
+    }
+
+    public Vector3i getOffset() {
+        return this.offset;
+    }
+
+    public Type getType() {
+        return this.type;
     }
 }

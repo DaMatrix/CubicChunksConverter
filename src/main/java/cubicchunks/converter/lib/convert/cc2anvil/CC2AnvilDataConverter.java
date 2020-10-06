@@ -42,18 +42,14 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipException;
 
 import static cubicchunks.converter.lib.util.Utils.*;
 
 public class CC2AnvilDataConverter implements ChunkDataConverter<CubicChunksColumnData, MultilayerAnvilChunkData> {
 
-    @Override public MultilayerAnvilChunkData convert(CubicChunksColumnData input) {
+    @Override public Set<MultilayerAnvilChunkData> convert(CubicChunksColumnData input) {
         Map<Integer, AnvilChunkData> data = new HashMap<>();
         MinecraftChunkLocation chunkPos = new MinecraftChunkLocation(input.getPosition().getEntryX(), input.getPosition().getEntryZ(), "mca");
 
@@ -67,7 +63,7 @@ public class CC2AnvilDataConverter implements ChunkDataConverter<CubicChunksColu
         worldLayers.forEach((key, value) ->
             data.put(key, new AnvilChunkData(input.getDimension(), chunkPos, convertWorldLayer(input.getColumnData(), value, key), 0))
         );
-        return new MultilayerAnvilChunkData(data);
+        return Collections.singleton(new MultilayerAnvilChunkData(data));
     }
 
     private ByteBuffer convertWorldLayer(ByteBuffer columnData, ByteBuffer[] cubes, int layerIdx) {

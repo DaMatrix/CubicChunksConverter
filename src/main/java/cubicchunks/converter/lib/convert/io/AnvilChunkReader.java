@@ -29,8 +29,13 @@ import static java.nio.file.Files.exists;
 
 import cubicchunks.converter.lib.Dimension;
 import cubicchunks.converter.lib.convert.data.AnvilChunkData;
+import cubicchunks.converter.lib.util.MemoryReadRegion;
+import cubicchunks.converter.lib.util.RWLockingCachedRegionProvider;
 import cubicchunks.converter.lib.util.UncheckedInterruptedException;
+import cubicchunks.regionlib.impl.MinecraftChunkLocation;
+import cubicchunks.regionlib.impl.header.TimestampHeaderEntryProvider;
 import cubicchunks.regionlib.impl.save.MinecraftSaveSection;
+import cubicchunks.regionlib.lib.provider.SimpleRegionProvider;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -39,8 +44,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, MinecraftSaveSection> {
@@ -49,7 +56,7 @@ public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, Minecr
     private final int offset;
 
     public AnvilChunkReader(Path srcDir) {
-        super(srcDir, (dim, path) -> exists(getDimensionPath(dim, path)) ? MinecraftSaveSection.createAt(getDimensionPath(dim, path), MCA) : null);
+        super(srcDir, (dim, path) -> exists(getDimensionPath(dim, path)) ? createSave(dim, path) : null);
         loadThread = Thread.currentThread();
 
         int offset = 0;
@@ -62,6 +69,22 @@ public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, Minecr
             }
         }
         this.offset = offset;
+    }
+
+    private static MinecraftSaveSection createSave(Dimension dim, Path path) {
+        Path directory = getDimensionPath(dim, path);
+        return new MinecraftSaveSection(new RWLockingCachedRegionProvider<>(
+                new SimpleRegionProvider<>(new MinecraftChunkLocation.Provider(MCA.name().toLowerCase()), directory, (keyProvider, regionKey) ->
+                        MemoryReadRegion.<MinecraftChunkLocation>builder()
+                                .setDirectory(directory)
+                                .setSectorSize(4096)
+                                .setKeyProvider(keyProvider)
+                                .setRegionKey(regionKey)
+                                .addHeaderEntry(new TimestampHeaderEntryProvider<>(TimeUnit.MILLISECONDS))
+                                .build(),
+                        (file, key) -> Files.exists(file)
+                )
+        ));
     }
 
     private static Path getDimensionPath(Dimension d, Path worldDir) {
@@ -100,7 +123,7 @@ public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, Minecr
             }
             MinecraftSaveSection vanillaSave = entry.getValue();
             Dimension d = entry.getKey();
-            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> consumer.accept(new AnvilChunkData(d, mcPos, vanillaSave.load(mcPos).orElse(null), this.offset))));
+            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> consumer.accept(new AnvilChunkData(d, mcPos, vanillaSave.load(mcPos, true).orElse(null), this.offset))));
         }
     }
 

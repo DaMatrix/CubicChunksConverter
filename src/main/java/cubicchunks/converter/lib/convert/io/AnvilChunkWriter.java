@@ -31,8 +31,14 @@ import cubicchunks.converter.lib.Dimension;
 import cubicchunks.converter.lib.convert.ChunkDataWriter;
 import cubicchunks.converter.lib.convert.data.AnvilChunkData;
 import cubicchunks.converter.lib.convert.data.MultilayerAnvilChunkData;
+import cubicchunks.converter.lib.util.MemoryWriteRegion;
+import cubicchunks.converter.lib.util.RWLockingCachedRegionProvider;
 import cubicchunks.converter.lib.util.Utils;
+import cubicchunks.regionlib.impl.MinecraftChunkLocation;
+import cubicchunks.regionlib.impl.header.TimestampHeaderEntryProvider;
 import cubicchunks.regionlib.impl.save.MinecraftSaveSection;
+import cubicchunks.regionlib.lib.Region;
+import cubicchunks.regionlib.lib.provider.SimpleRegionProvider;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -41,12 +47,14 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class AnvilChunkWriter implements ChunkDataWriter<MultilayerAnvilChunkData> {
 
@@ -76,7 +84,18 @@ public class AnvilChunkWriter implements ChunkDataWriter<MultilayerAnvilChunkDat
                     throw new RuntimeException(e);
                 }
 
-                return MinecraftSaveSection.createAt(regionDir, MCA);
+                return new MinecraftSaveSection(new RWLockingCachedRegionProvider<>(
+                        new SimpleRegionProvider<>(new MinecraftChunkLocation.Provider(MCA.name().toLowerCase()), regionDir, (keyProvider, regionKey) ->
+                                MemoryWriteRegion.<MinecraftChunkLocation>builder()
+                                        .setDirectory(regionDir)
+                                        .setSectorSize(4096)
+                                        .setKeyProvider(keyProvider)
+                                        .setRegionKey(regionKey)
+                                        .addHeaderEntry(new TimestampHeaderEntryProvider<>(TimeUnit.MILLISECONDS))
+                                        .build(),
+                                (file, key) -> Files.exists(file)
+                        )
+                ));
             }));
             save.save(chunk.getPosition(), chunk.getData());
         }

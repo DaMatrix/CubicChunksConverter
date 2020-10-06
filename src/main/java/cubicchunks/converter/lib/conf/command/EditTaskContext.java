@@ -21,15 +21,22 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.lib.conf.command;
 
-public interface IProgressListener {
+import cubicchunks.converter.lib.util.EditTask;
 
-    void update();
+import java.util.ArrayList;
+import java.util.List;
 
-    ErrorHandleResult error(Throwable t);
+public class EditTaskContext {
 
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+    private final List<EditTask> tasks = new ArrayList<>();
+
+    public void addEditTask(EditTask task) {
+        this.tasks.add(task);
+    }
+
+    public List<EditTask> getTasks() {
+        return tasks;
     }
 }

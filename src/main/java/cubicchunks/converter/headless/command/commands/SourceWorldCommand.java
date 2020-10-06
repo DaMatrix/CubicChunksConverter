@@ -21,15 +21,25 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.headless.command.commands;
 
-public interface IProgressListener {
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import cubicchunks.converter.headless.command.HeadlessCommandContext;
 
-    void update();
+import java.nio.file.Paths;
 
-    ErrorHandleResult error(Throwable t);
-
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+public class SourceWorldCommand {
+    public static void register(CommandDispatcher<HeadlessCommandContext> dispatcher) {
+        dispatcher.register(LiteralArgumentBuilder.<HeadlessCommandContext>literal("srcWorld")
+            .then(RequiredArgumentBuilder.<HeadlessCommandContext, String>argument("src", StringArgumentType.string())
+                .executes((context) -> {
+                    context.getSource().setSrcWorld(Paths.get(context.getArgument("src", String.class)));
+                    return 1;
+                })
+            )
+        );
     }
 }

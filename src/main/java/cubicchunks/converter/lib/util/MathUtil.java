@@ -21,15 +21,14 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.lib.util;
 
-public interface IProgressListener {
+public class MathUtil {
+    public static int ceilDiv(int a, int b) {
+        return -Math.floorDiv(-a, b);
+    }
 
-    void update();
-
-    ErrorHandleResult error(Throwable t);
-
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+    public static int log2(int n) {
+        return (int) (Math.log(n) / Math.log(2));
     }
 }

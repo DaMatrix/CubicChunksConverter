@@ -21,15 +21,21 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.gui;
 
-public interface IProgressListener {
+import cubicchunks.converter.headless.HeadlessMain;
 
-    void update();
+import java.awt.EventQueue;
+import java.awt.GraphicsEnvironment;
 
-    ErrorHandleResult error(Throwable t);
+public class GuiMain {
 
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+    public static void main(String[] args) throws InterruptedException {
+        if ((args.length > 0 && args[0].equals("--headless")) || GraphicsEnvironment.isHeadless()) {
+            HeadlessMain.main(args);
+            return;
+        }
+        EventQueue.invokeLater(() -> new GuiFrame().init());
+        Thread.sleep(Long.MAX_VALUE);
     }
 }

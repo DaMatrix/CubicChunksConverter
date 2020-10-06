@@ -21,15 +21,46 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package cubicchunks.converter.lib;
+package cubicchunks.converter.lib.util;
 
-public interface IProgressListener {
+import java.util.Objects;
 
-    void update();
+public class Vector2i {
+    private final int x;
+    private final int y;
 
-    ErrorHandleResult error(Throwable t);
+    public Vector2i(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 
-    enum ErrorHandleResult {
-        IGNORE, IGNORE_ALL, STOP_KEEP_DATA, STOP_DISCARD
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Vector2i vector2i = (Vector2i) o;
+        return x == vector2i.x &&
+                y == vector2i.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+
+    @Override
+    public String toString() {
+        return "Vector2i{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
     }
 }
