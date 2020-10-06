@@ -94,8 +94,8 @@ public class Registry {
         registerConverter("Default", CC2AnvilDataConverter::new, CC2AnvilLevelInfoConverter::new, CubicChunksColumnData.class, MultilayerAnvilChunkData.class, CC2AnvilDataConverter.class);
         registerConverter("Relocating", CC2CCRelocatingDataConverter::new, CC2CCRelocatingLevelInfoConverter::new, CC2CCRelocatingDataConverter::loadConfig, CubicChunksColumnData.class, CubicChunksColumnData.class, CC2CCRelocatingDataConverter.class);
         registerConverter("Default", Robinton2CCConverter::new, Robinton2CCLevelInfoConverter::new, RobintonColumnData.class, CubicChunksColumnData.class, Robinton2CCConverter.class);
-        registerConverter(Nukkit2AnvilDataConverter::new, Nukkit2AnvilLevelInfoConverter::new, NukkitChunkData.class, AnvilChunkData.class);
-        registerConverter(Anvil2NukkitDataConverter::new, Anvil2NukkitLevelInfoConverter::new, AnvilChunkData.class, NukkitChunkData.class);
+        registerConverter("Nukkit", Nukkit2AnvilDataConverter::new, Nukkit2AnvilLevelInfoConverter::new, NukkitChunkData.class, AnvilChunkData.class, Nukkit2AnvilDataConverter.class);
+        registerConverter("Nukkit", Anvil2NukkitDataConverter::new, Anvil2NukkitLevelInfoConverter::new, AnvilChunkData.class, NukkitChunkData.class, Anvil2NukkitDataConverter.class);
     }
 
     // can't have all named register because of type erasure

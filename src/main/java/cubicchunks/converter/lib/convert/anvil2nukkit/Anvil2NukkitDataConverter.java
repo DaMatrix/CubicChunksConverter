@@ -12,6 +12,9 @@ import cubicchunks.converter.lib.util.Utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 /**
  * @author DaPorkchop_
@@ -179,13 +182,13 @@ public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkD
 
     @Override
     @SuppressWarnings("unchecked")
-    public NukkitChunkData convert(AnvilChunkData input) {
+    public Set<NukkitChunkData> convert(AnvilChunkData input) {
         try {
             CompoundTag tag = Utils.readCompressed(new ByteArrayInputStream(input.getData().array()));
             boolean dirty = ((ListTag<CompoundTag>) ((CompoundTag) tag.getValue().get("Level")).getValue().get("Sections")).getValue().stream()
                     .mapToInt(Anvil2NukkitDataConverter::fixSection)
                     .max().orElse(0) != 0;
-            return new NukkitChunkData(input.getDimension(), input.getPosition(), dirty ? Utils.writeCompressedZlib(tag, true) : input.getData());
+            return Collections.singleton(new NukkitChunkData(input.getDimension(), input.getPosition(), dirty ? Utils.writeCompressedZlib(tag, true) : input.getData()));
         } catch (IOException e) {
             throw new AssertionError(e);
         }
