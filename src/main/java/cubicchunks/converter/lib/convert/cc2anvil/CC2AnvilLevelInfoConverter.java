@@ -67,6 +67,8 @@ public class CC2AnvilLevelInfoConverter implements LevelInfoConverter<CubicChunk
                             }
                             if (dataTag.getName().equalsIgnoreCase("generatorName")) {
                                 newDataMap.put(new StringTag(dataTag.getName(), getGeneratorName((String) dataTag.getValue())));
+                            } else if (dataTag.getName().equalsIgnoreCase("generatorOptions")) {
+                                newDataMap.put(new StringTag(dataTag.getName(), ""));
                             } else {
                                 newDataMap.put(dataTag);
                             }

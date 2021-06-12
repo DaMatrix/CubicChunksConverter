@@ -83,7 +83,7 @@ public class NukkitChunkReader extends BaseMinecraftReader<NukkitChunkData, Mine
             }
             MinecraftSaveSection vanillaSave = entry.getValue();
             Dimension d = entry.getKey();
-            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> consumer.accept(new NukkitChunkData(d, mcPos, vanillaSave.load(mcPos).orElse(null)))));
+            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> consumer.accept(new NukkitChunkData(d, mcPos, vanillaSave.load(mcPos, true).orElse(null)))));
         }
     }
 

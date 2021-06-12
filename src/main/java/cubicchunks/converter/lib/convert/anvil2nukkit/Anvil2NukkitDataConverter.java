@@ -20,6 +20,8 @@ import java.util.stream.IntStream;
  * @author DaPorkchop_
  */
 public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkData, NukkitChunkData> {
+    private static final int[] FIXED_LOOKUP = IntStream.range(0, 1 << (8 + 4)).map(Anvil2NukkitDataConverter::fixId).toArray();
+
     private static int id(int block, int meta) {
         return (block << 4) | meta;
     }
@@ -168,7 +170,7 @@ public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkD
                 for (int x = 0; x < 16; x++) { //minimize cache misses
                     int index = getAnvilIndex(x, y, z);
                     int oldId = ((blocks[index] & 0xFF) << 4) | meta.get(index);
-                    int newId = fixId(oldId);
+                    int newId = FIXED_LOOKUP[oldId];
                     if (newId != oldId) {
                         blocks[index] = (byte) (newId >> 4);
                         meta.set(index, newId & 0xF);
@@ -186,8 +188,8 @@ public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkD
         try {
             CompoundTag tag = Utils.readCompressed(new ByteArrayInputStream(input.getData().array()));
             boolean dirty = ((ListTag<CompoundTag>) ((CompoundTag) tag.getValue().get("Level")).getValue().get("Sections")).getValue().stream()
-                    .mapToInt(Anvil2NukkitDataConverter::fixSection)
-                    .max().orElse(0) != 0;
+                                    .mapToInt(Anvil2NukkitDataConverter::fixSection)
+                                    .max().orElse(0) != 0;
             return Collections.singleton(new NukkitChunkData(input.getDimension(), input.getPosition(), dirty ? Utils.writeCompressedZlib(tag, true) : input.getData()));
         } catch (IOException e) {
             throw new AssertionError(e);
