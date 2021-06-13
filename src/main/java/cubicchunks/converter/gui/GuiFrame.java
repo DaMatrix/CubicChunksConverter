@@ -45,6 +45,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class GuiFrame extends JFrame {
+    public static int DEFAULT_CLOSE_OPERATION = WindowConstants.EXIT_ON_CLOSE;
 
     private boolean isConverting = false;
     private boolean hasChangedDst;
@@ -68,7 +69,7 @@ public class GuiFrame extends JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
             throw new Error("System Look and Feel shouldn't throw exception", e);
         }
-        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(DEFAULT_CLOSE_OPERATION);
         this.setMinimumSize(new Dimension(640, 0));
 
         JPanel root = new JPanel(new BorderLayout());
