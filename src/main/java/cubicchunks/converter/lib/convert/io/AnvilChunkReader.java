@@ -44,11 +44,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, MinecraftSaveSection> {
 
@@ -108,22 +111,32 @@ public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, Minecr
         }
     }
 
-    @Override public void loadChunks(Consumer<? super AnvilChunkData> consumer) throws IOException {
+    @Override public void loadChunks(Consumer<? super AnvilChunkData> consumer, Predicate<Throwable> errorHandler) throws IOException {
         try {
-            doLoadChunks(consumer);
+            doLoadChunks(consumer, errorHandler);
         } catch (UncheckedInterruptedException ex) {
             // return
         }
     }
 
-    private void doLoadChunks(Consumer<? super AnvilChunkData> consumer) throws IOException, UncheckedInterruptedException {
+    private void doLoadChunks(Consumer<? super AnvilChunkData> consumer, Predicate<Throwable> errorHandler) throws IOException, UncheckedInterruptedException {
         for (Map.Entry<Dimension, MinecraftSaveSection> entry : saves.entrySet()) {
             if (Thread.interrupted()) {
                 return;
             }
             MinecraftSaveSection vanillaSave = entry.getValue();
             Dimension d = entry.getKey();
-            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> consumer.accept(new AnvilChunkData(d, mcPos, vanillaSave.load(mcPos, true).orElse(null), this.offset))));
+            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> {
+                try {
+                    Optional<ByteBuffer> load = vanillaSave.load(mcPos, true);
+                    consumer.accept(new AnvilChunkData(d, mcPos, load.orElse(null), this.offset));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (!errorHandler.test(e)) {
+                        throw new UncheckedInterruptedException();
+                    }
+                }
+            }));
         }
     }
 
