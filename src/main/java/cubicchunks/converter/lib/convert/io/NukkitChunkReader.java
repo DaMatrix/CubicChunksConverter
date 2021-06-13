@@ -24,14 +24,18 @@
 package cubicchunks.converter.lib.convert.io;
 
 import cubicchunks.converter.lib.Dimension;
+import cubicchunks.converter.lib.convert.data.AnvilChunkData;
 import cubicchunks.converter.lib.convert.data.NukkitChunkData;
 import cubicchunks.converter.lib.util.UncheckedInterruptedException;
 import cubicchunks.regionlib.impl.save.MinecraftSaveSection;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static cubicchunks.converter.lib.util.Utils.*;
 import static cubicchunks.regionlib.impl.save.MinecraftSaveSection.MinecraftRegionType.*;
@@ -68,22 +72,32 @@ public class NukkitChunkReader extends BaseMinecraftReader<NukkitChunkData, Mine
     }
 
     @Override
-    public void loadChunks(Consumer<? super NukkitChunkData> consumer) throws IOException {
+    public void loadChunks(Consumer<? super NukkitChunkData> consumer, Predicate<Throwable> errorHandler) throws IOException {
         try {
-            doLoadChunks(consumer);
+            doLoadChunks(consumer, errorHandler);
         } catch (UncheckedInterruptedException ex) {
             // return
         }
     }
 
-    private void doLoadChunks(Consumer<? super NukkitChunkData> consumer) throws IOException, UncheckedInterruptedException {
+    private void doLoadChunks(Consumer<? super NukkitChunkData> consumer, Predicate<Throwable> errorHandler) throws IOException, UncheckedInterruptedException {
         for (Map.Entry<Dimension, MinecraftSaveSection> entry : saves.entrySet()) {
             if (Thread.interrupted()) {
                 return;
             }
             MinecraftSaveSection vanillaSave = entry.getValue();
             Dimension d = entry.getKey();
-            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> consumer.accept(new NukkitChunkData(d, mcPos, vanillaSave.load(mcPos, true).orElse(null)))));
+            vanillaSave.forAllKeys(interruptibleConsumer(mcPos -> {
+                try {
+                    Optional<ByteBuffer> load = vanillaSave.load(mcPos, true);
+                    consumer.accept(new NukkitChunkData(d, mcPos, load.orElse(null)));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (!errorHandler.test(e)) {
+                        throw new UncheckedInterruptedException();
+                    }
+                }
+            }));
         }
     }
 
