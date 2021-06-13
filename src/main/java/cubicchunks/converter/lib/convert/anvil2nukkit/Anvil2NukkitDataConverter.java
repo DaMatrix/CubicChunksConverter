@@ -6,7 +6,6 @@ import com.flowpowered.nbt.CompoundTag;
 import com.flowpowered.nbt.ListTag;
 import cubicchunks.converter.lib.convert.ChunkDataConverter;
 import cubicchunks.converter.lib.convert.data.AnvilChunkData;
-import cubicchunks.converter.lib.convert.data.NukkitChunkData;
 import cubicchunks.converter.lib.util.NibbleArray;
 import cubicchunks.converter.lib.util.Utils;
 
@@ -19,7 +18,7 @@ import java.util.stream.IntStream;
 /**
  * @author DaPorkchop_
  */
-public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkData, NukkitChunkData> {
+public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkData, AnvilChunkData> {
     private static final int[] FIXED_LOOKUP = IntStream.range(0, 1 << (8 + 4)).map(Anvil2NukkitDataConverter::fixId).toArray();
 
     private static int id(int block, int meta) {
@@ -184,13 +183,13 @@ public class Anvil2NukkitDataConverter implements ChunkDataConverter<AnvilChunkD
 
     @Override
     @SuppressWarnings("unchecked")
-    public Set<NukkitChunkData> convert(AnvilChunkData input) {
+    public Set<AnvilChunkData> convert(AnvilChunkData input) {
         try {
             CompoundTag tag = Utils.readCompressed(new ByteArrayInputStream(input.getData().array()));
             boolean dirty = ((ListTag<CompoundTag>) ((CompoundTag) tag.getValue().get("Level")).getValue().get("Sections")).getValue().stream()
                                     .mapToInt(Anvil2NukkitDataConverter::fixSection)
                                     .max().orElse(0) != 0;
-            return Collections.singleton(new NukkitChunkData(input.getDimension(), input.getPosition(), dirty ? Utils.writeCompressedZlib(tag, true) : input.getData()));
+            return Collections.singleton(new AnvilChunkData(input.getDimension(), input.getPosition(), dirty ? Utils.writeCompressedZlib(tag, true) : input.getData(), input.offsetSections));
         } catch (IOException e) {
             throw new AssertionError(e);
         }

@@ -6,7 +6,6 @@ import com.flowpowered.nbt.CompoundTag;
 import com.flowpowered.nbt.ListTag;
 import cubicchunks.converter.lib.convert.ChunkDataConverter;
 import cubicchunks.converter.lib.convert.data.AnvilChunkData;
-import cubicchunks.converter.lib.convert.data.NukkitChunkData;
 import cubicchunks.converter.lib.util.NibbleArray;
 import cubicchunks.converter.lib.util.Utils;
 
@@ -19,7 +18,7 @@ import java.util.stream.IntStream;
 /**
  * @author DaPorkchop_
  */
-public class Nukkit2AnvilDataConverter implements ChunkDataConverter<NukkitChunkData, AnvilChunkData> {
+public class Nukkit2AnvilDataConverter implements ChunkDataConverter<AnvilChunkData, AnvilChunkData> {
     private static final int[] FIXED_LOOKUP = IntStream.range(0, 1 << (8 + 4)).map(Nukkit2AnvilDataConverter::fixId).toArray();
 
     private static int id(int block, int meta) {
@@ -179,7 +178,7 @@ public class Nukkit2AnvilDataConverter implements ChunkDataConverter<NukkitChunk
 
     @Override
     @SuppressWarnings("unchecked")
-    public Set<AnvilChunkData> convert(NukkitChunkData input) {
+    public Set<AnvilChunkData> convert(AnvilChunkData input) {
         try {
             CompoundTag tag = Utils.readCompressed(new ByteArrayInputStream(input.getData().array()));
             boolean dirty = ((ListTag<CompoundTag>) ((CompoundTag) tag.getValue().get("Level")).getValue().get("Sections")).getValue().stream()

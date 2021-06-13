@@ -43,26 +43,18 @@ import cubicchunks.converter.lib.convert.cc2anvil.CC2AnvilDataConverter;
 import cubicchunks.converter.lib.convert.cc2anvil.CC2AnvilLevelInfoConverter;
 import cubicchunks.converter.lib.convert.data.AnvilChunkData;
 import cubicchunks.converter.lib.convert.data.CubicChunksBigCube112Data;
-import cubicchunks.converter.lib.convert.data.NukkitChunkData;
 import cubicchunks.converter.lib.convert.data.CubicChunksColumnData;
 import cubicchunks.converter.lib.convert.data.CubicChunksProtoBigCubeData;
 import cubicchunks.converter.lib.convert.data.MultilayerAnvilChunkData;
-import cubicchunks.converter.lib.convert.data.NukkitChunkData;
 import cubicchunks.converter.lib.convert.data.RobintonColumnData;
 import cubicchunks.converter.lib.convert.io.AnvilChunkReader;
 import cubicchunks.converter.lib.convert.io.AnvilChunkWriter;
-import cubicchunks.converter.lib.convert.io.NukkitChunkReader;
 import cubicchunks.converter.lib.convert.io.CubicChunkReader;
 import cubicchunks.converter.lib.convert.io.CubicChunkWriter;
-import cubicchunks.converter.lib.convert.io.NoopChunkWriter;
-import cubicchunks.converter.lib.convert.io.NukkitChunkWriter;
 import cubicchunks.converter.lib.convert.io.CubicChunksBigCube112Reader;
 import cubicchunks.converter.lib.convert.io.CubicChunksProtoBigCubeWriter;
-import cubicchunks.converter.lib.convert.io.NukkitChunkWriter;
 import cubicchunks.converter.lib.convert.io.RobintonChunkReader;
 import cubicchunks.converter.lib.convert.io.SingleAnvilChunkWriter;
-import cubicchunks.converter.lib.convert.noop.NoopDataConverter;
-import cubicchunks.converter.lib.convert.noop.NoopLevelInfoConverter;
 import cubicchunks.converter.lib.convert.nukkit2anvil.Nukkit2AnvilDataConverter;
 import cubicchunks.converter.lib.convert.nukkit2anvil.Nukkit2AnvilLevelInfoConverter;
 import cubicchunks.converter.lib.convert.robinton2cc.Robinton2CCConverter;
@@ -92,21 +84,19 @@ public class Registry {
         registerReader("CubicChunks 1-10 - 1.12", CubicChunkReader::new, CubicChunksColumnData.class);
         registerReader("RobintonCubicChunks", RobintonChunkReader::new, RobintonColumnData.class);
         registerReader("CubicChunks 1.10 - 1.12 (BigCube)", CubicChunksBigCube112Reader::new, CubicChunksBigCube112Data.class);
-        registerReader("Nukkit", NukkitChunkReader::new, NukkitChunkData.class);
 
         registerWriter("Anvil (layered)", AnvilChunkWriter::new, MultilayerAnvilChunkData.class);
         registerWriter("Anvil", SingleAnvilChunkWriter::new, AnvilChunkData.class);
         registerWriter("CubicChunks 1.10 - 1.12", CubicChunkWriter::new, CubicChunksColumnData.class);
         registerWriter("CubicChunks 1.17+ (ProtoBigCube)", CubicChunksProtoBigCubeWriter::new, CubicChunksProtoBigCubeData.class);
-        registerWriter("Nukkit", NukkitChunkWriter::new, NukkitChunkData.class);
 
         registerConverter("Default", Anvil2CCDataConverter::new, Anvil2CCLevelInfoConverter::new, AnvilChunkData.class, CubicChunksColumnData.class, Anvil2CCDataConverter.class);
         registerConverter("Default", CC2AnvilDataConverter::new, CC2AnvilLevelInfoConverter::new, CubicChunksColumnData.class, MultilayerAnvilChunkData.class, CC2AnvilDataConverter.class);
         registerConverter("Relocating", CC2CCRelocatingDataConverter::new, CC2CCRelocatingLevelInfoConverter::new, CC2CCRelocatingDataConverter::loadConfig, CubicChunksColumnData.class, CubicChunksColumnData.class, CC2CCRelocatingDataConverter.class);
         registerConverter("Default", Robinton2CCConverter::new, Robinton2CCLevelInfoConverter::new, RobintonColumnData.class, CubicChunksColumnData.class, Robinton2CCConverter.class);
         registerConverter("Default", Cc2BigCubeCcDataConverter::new, Cc2BigCubeCcLevelInfoConverter::new, CubicChunksBigCube112Data.class, CubicChunksProtoBigCubeData.class, Cc2BigCubeCcDataConverter.class);
-        registerConverter("Nukkit", Nukkit2AnvilDataConverter::new, Nukkit2AnvilLevelInfoConverter::new, NukkitChunkData.class, AnvilChunkData.class, Nukkit2AnvilDataConverter.class);
-        registerConverter("Nukkit", Anvil2NukkitDataConverter::new, Anvil2NukkitLevelInfoConverter::new, AnvilChunkData.class, NukkitChunkData.class, Anvil2NukkitDataConverter.class);
+        registerConverter("Anvil -> Nukkit", Nukkit2AnvilDataConverter::new, Nukkit2AnvilLevelInfoConverter::new, AnvilChunkData.class, AnvilChunkData.class, Nukkit2AnvilDataConverter.class);
+        registerConverter("Nukkit -> Anvil", Anvil2NukkitDataConverter::new, Anvil2NukkitLevelInfoConverter::new, AnvilChunkData.class, AnvilChunkData.class, Anvil2NukkitDataConverter.class);
     }
 
     // can't have all named register because of type erasure

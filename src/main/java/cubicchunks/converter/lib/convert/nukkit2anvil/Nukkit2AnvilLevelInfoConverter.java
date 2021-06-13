@@ -2,7 +2,6 @@ package cubicchunks.converter.lib.convert.nukkit2anvil;
 
 import cubicchunks.converter.lib.convert.LevelInfoConverter;
 import cubicchunks.converter.lib.convert.data.AnvilChunkData;
-import cubicchunks.converter.lib.convert.data.NukkitChunkData;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,7 +10,7 @@ import java.nio.file.Path;
 /**
  * @author DaPorkchop_
  */
-public class Nukkit2AnvilLevelInfoConverter implements LevelInfoConverter<NukkitChunkData, AnvilChunkData> {
+public class Nukkit2AnvilLevelInfoConverter implements LevelInfoConverter<AnvilChunkData, AnvilChunkData> {
     private final Path srcDir;
     private final Path dstDir;
 
