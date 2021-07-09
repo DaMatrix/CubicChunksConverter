@@ -22,50 +22,50 @@ package net.daporkchop.rocksmc.converter.data;
 
 import cubicchunks.converter.lib.Dimension;
 import cubicchunks.converter.lib.util.Vector2i;
+import cubicchunks.regionlib.impl.EntryLocation2D;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
 /**
  * @author DaPorkchop_
  */
-public class RocksLocalVanillaColumnData implements IRocksLocalData {
-    protected final Dimension dimension;
-    protected final Vector2i position;
-    protected final ByteBuffer data;
-    public final int offsetSections;
+public class RocksLocalCubicData implements IRocksLocalData {
+    private final Dimension dimension;
+    private final EntryLocation2D position;
+    private final ByteBuffer columnData;
+    private final Map<Integer, ByteBuffer> cubeData;
 
-    public RocksLocalVanillaColumnData(Dimension dimension, Vector2i position, ByteBuffer data, int offsetSections) {
+    public RocksLocalCubicData(Dimension dimension, EntryLocation2D position, ByteBuffer columnData, Map<Integer, ByteBuffer> cubeData) {
         this.dimension = dimension;
         this.position = position;
-        this.data = data;
-        this.offsetSections = offsetSections;
+        this.columnData = columnData;
+        this.cubeData = cubeData;
     }
 
     @Override
     public Dimension getDimension() {
-        return dimension;
+        return this.dimension;
     }
 
-    public Vector2i getPosition() {
-        return position;
-    }
-
-    @Override
-    public Vector2i getPositionAsVector() {
+    public EntryLocation2D getPosition() {
         return this.position;
     }
 
     @Override
+    public Vector2i getPositionAsVector() {
+        return new Vector2i(this.position.getEntryX(), this.position.getEntryZ());
+    }
+
+    @Override
     public ByteBuffer getColumnData() {
-        return data;
+        return this.columnData;
     }
 
     @Override
     public Map<Integer, ByteBuffer> getCubeData() {
-        return Collections.emptyMap();
+        return this.cubeData;
     }
 
     @Override
@@ -76,23 +76,24 @@ public class RocksLocalVanillaColumnData implements IRocksLocalData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        RocksLocalVanillaColumnData that = (RocksLocalVanillaColumnData) o;
+        RocksLocalCubicData that = (RocksLocalCubicData) o;
         return dimension.equals(that.dimension) &&
-               position.equals(that.position) &&
-               data.equals(that.data);
+               Objects.equals(columnData, that.columnData) &&
+               cubeData.equals(that.cubeData);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dimension, position, data);
+        return Objects.hash(dimension, position, columnData, cubeData);
     }
 
     @Override
     public String toString() {
-        return "RocksLocalVanillaColumnData{" +
+        return "RocksLocalCubicData{" +
                "dimension='" + dimension + '\'' +
                ", position=" + position +
-               ", data=" + data +
+               ", columnData=" + columnData +
+               ", cubeData=" + cubeData +
                '}';
     }
 }

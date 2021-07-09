@@ -7,6 +7,7 @@ import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.FlushOptions;
 import org.rocksdb.LRUCache;
+import org.rocksdb.Priority;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.WriteOptions;
@@ -28,7 +29,10 @@ public class RocksOptions {
         DB_OPTIONS = new DBOptions()
                 .setCreateIfMissing(true)
                 .setCreateMissingColumnFamilies(true)
-                .setEnv(Env.getDefault().setBackgroundThreads(Runtime.getRuntime().availableProcessors()))
+                .setEnv(Env.getDefault()
+                        .setBackgroundThreads(Runtime.getRuntime().availableProcessors(), Priority.BOTTOM)
+                        .setBackgroundThreads(Runtime.getRuntime().availableProcessors(), Priority.LOW)
+                        .setBackgroundThreads(Runtime.getRuntime().availableProcessors(), Priority.HIGH))
                 .setIncreaseParallelism(Runtime.getRuntime().availableProcessors())
                 .setParanoidChecks(false)
                 .setMaxFileOpeningThreads(Runtime.getRuntime().availableProcessors())
@@ -42,7 +46,7 @@ public class RocksOptions {
                 .setDbWriteBufferSize(0L << 10L)
                 .setAllowConcurrentMemtableWrite(true)
                 .setSkipStatsUpdateOnDbOpen(true)
-                .setManualWalFlush(false)
+                .setManualWalFlush(true)
                 .setMaxBackgroundJobs(Runtime.getRuntime().availableProcessors())
                 .setMaxOpenFiles(256);
 
@@ -59,7 +63,8 @@ public class RocksOptions {
                 .setTargetFileSizeMultiplier(1);
 
         READ_OPTIONS = new ReadOptions();
-        WRITE_OPTIONS = new WriteOptions();
+        WRITE_OPTIONS = new WriteOptions()
+                .setDisableWAL(true);
         FLUSH_OPTIONS = new FlushOptions();
     }
 }

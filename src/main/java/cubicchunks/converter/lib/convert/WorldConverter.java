@@ -86,7 +86,7 @@ public class WorldConverter<IN, OUT> {
         ((ThreadPoolExecutor)convertQueue).setRejectedExecutionHandler(handler);
 
         ioQueueImpl = new ArrayBlockingQueue<>(IO_QUEUE_SIZE);
-        ioQueue = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.MILLISECONDS, ioQueueImpl);
+        ioQueue = new ThreadPoolExecutor(THREADS, THREADS, 1000L, TimeUnit.MILLISECONDS, ioQueueImpl);
         ((ThreadPoolExecutor)ioQueue).setRejectedExecutionHandler(handler);
     }
 

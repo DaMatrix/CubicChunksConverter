@@ -18,7 +18,7 @@ public class RocksLocalVanilla2AnvilDataConverter implements ChunkDataConverter<
         return Collections.singleton(new AnvilChunkData(
                 input.getDimension(),
                 new MinecraftChunkLocation(input.getPosition().getX(), input.getPosition().getY(), "mca"),
-                ChunkCompressUtils.compressForAnvil(input.getData()),
+                ChunkCompressUtils.compressAnvil(input.getColumnData()),
                 input.offsetSections));
     }
 }

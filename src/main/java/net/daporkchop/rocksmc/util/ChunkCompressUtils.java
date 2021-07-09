@@ -6,14 +6,15 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
-import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
@@ -27,7 +28,11 @@ public class ChunkCompressUtils {
     protected static final ThreadLocal<Inflater> INFLATER_CACHE = ThreadLocal.withInitial(Inflater::new);
     protected static final ThreadLocal<ByteBuffer> BUFFER_CACHE = ThreadLocal.withInitial(() -> ByteBuffer.allocate(MAX_COMPRESSED_DATA_SIZE));
 
-    public static ByteBuffer compressForAnvil(ByteBuffer src) {
+    public static ByteBuffer compressAnvil(ByteBuffer src) {
+        if (src == null) {
+            return null;
+        }
+
         Deflater deflater = DEFLATER_CACHE.get();
         ByteBuffer dst = BUFFER_CACHE.get();
         dst.clear().position(1);
@@ -64,7 +69,11 @@ public class ChunkCompressUtils {
         return ByteBuffer.wrap(Arrays.copyOfRange(dst.array(), dst.arrayOffset() + dst.position(), dst.remaining()));
     }
 
-    public static ByteBuffer decompressFromAnvil(ByteBuffer src) {
+    public static ByteBuffer decompressAnvil(ByteBuffer src) {
+        if (src == null) {
+            return null;
+        }
+
         try {
             switch (src.get() & 0xFF) {
                 case 2: //zlib
@@ -114,5 +123,43 @@ public class ChunkCompressUtils {
         }
 
         return ByteBuffer.wrap(baos.toByteArray());
+    }
+
+    protected static ByteBuffer compressGzip(ByteBuffer src) throws IOException {
+        return compressStream(src, Utils.propagateExceptions(GZIPOutputStream::new));
+    }
+
+    protected static ByteBuffer compressStream(ByteBuffer src, Function<OutputStream, OutputStream> deflaterFactory) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try (OutputStream out = deflaterFactory.apply(baos)) {
+            out.write(src.array(), src.arrayOffset() + src.position(), src.remaining());
+        }
+
+        return ByteBuffer.wrap(baos.toByteArray());
+    }
+
+    public static ByteBuffer compressCubicChunks(ByteBuffer src) {
+        if (src == null) {
+            return null;
+        }
+
+        try {
+            return compressGzip(src);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static ByteBuffer decompressCubicChunks(ByteBuffer src) {
+        if (src == null) {
+            return null;
+        }
+
+        try {
+            return decompressGzip(src);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

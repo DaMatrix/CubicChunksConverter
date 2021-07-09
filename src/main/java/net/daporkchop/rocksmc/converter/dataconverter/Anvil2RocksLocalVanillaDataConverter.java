@@ -18,7 +18,7 @@ public class Anvil2RocksLocalVanillaDataConverter implements ChunkDataConverter<
         return Collections.singleton(new RocksLocalVanillaColumnData(
                 input.getDimension(),
                 new Vector2i(input.getPosition().getEntryX(), input.getPosition().getEntryZ()),
-                ChunkCompressUtils.decompressFromAnvil(input.getData()),
+                ChunkCompressUtils.decompressAnvil(input.getData()),
                 input.offsetSections));
     }
 }

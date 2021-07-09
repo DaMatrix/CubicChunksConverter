@@ -7,6 +7,7 @@ import net.daporkchop.rocksmc.storage.IBinaryCubeStorage;
 import net.daporkchop.rocksmc.util.UncheckedRocksDBException;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
+import org.rocksdb.FlushOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
@@ -242,6 +243,7 @@ public class LocalStorageImpl implements IBinaryCubeStorage {
     @Override
     public void flush() throws IOException {
         try {
+            this.db.flush(new FlushOptions().setWaitForFlush(true).setAllowWriteStall(true), this.cfHandles);
             this.db.flushWal(true);
         } catch (RocksDBException e) {
             throw new IOException(e); //rethrow
@@ -250,13 +252,7 @@ public class LocalStorageImpl implements IBinaryCubeStorage {
 
     @Override
     public void close() throws IOException {
-        this.cfHandles.parallelStream().forEach(cf -> {
-            try {
-                this.db.compactRange(cf);
-            } catch (RocksDBException e) {
-                throw new UncheckedRocksDBException(e);
-            }
-        });
+        this.flush();
 
         this.cfHandles.forEach(ColumnFamilyHandle::close); //close column families before db
         this.db.close();

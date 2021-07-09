@@ -14,10 +14,10 @@ import java.util.stream.Stream;
 /**
  * @author DaPorkchop_
  */
-public class CopyEverythingExceptLevelInfoConverter<IN, OUT> implements LevelInfoConverter<IN, OUT> {
-    private final Path srcDir;
-    private final Path dstDir;
-    private final Set<Path> blacklist;
+public abstract class CopyEverythingExceptLevelInfoConverter<IN, OUT> implements LevelInfoConverter<IN, OUT> {
+    protected final Path srcDir;
+    protected final Path dstDir;
+    protected final Set<Path> blacklist;
 
     public CopyEverythingExceptLevelInfoConverter(Path srcDir, Path dstDir, String... blacklist) {
         this.srcDir = srcDir;
