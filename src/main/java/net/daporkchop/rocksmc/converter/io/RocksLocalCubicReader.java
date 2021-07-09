@@ -20,14 +20,10 @@
 
 package net.daporkchop.rocksmc.converter.io;
 
-import com.carrotsearch.hppc.LongObjectMap;
-import com.carrotsearch.hppc.LongObjectScatterMap;
 import cubicchunks.converter.lib.Dimension;
 import cubicchunks.converter.lib.convert.io.BaseMinecraftReader;
 import cubicchunks.converter.lib.util.UncheckedInterruptedException;
 import cubicchunks.converter.lib.util.Utils;
-import cubicchunks.converter.lib.util.Vector2i;
-import cubicchunks.converter.lib.util.Vector3i;
 import cubicchunks.regionlib.impl.EntryLocation2D;
 import cubicchunks.regionlib.util.CheckedFunction;
 import net.daporkchop.rocksmc.converter.data.RocksLocalCubicData;
@@ -38,16 +34,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
+import java.util.stream.Stream;
 
 /**
  * @author DaPorkchop_
@@ -69,7 +60,7 @@ public class RocksLocalCubicReader extends BaseMinecraftReader<RocksLocalCubicDa
     }
 
     private volatile boolean running = true;
-    private final CompletableFuture<Map<Dimension, LongObjectMap<int[]>>> countFuture = new CompletableFuture<>();
+    private final CompletableFuture<Void> countFuture = new CompletableFuture<>();
     private final CompletableFuture<Void> loadFuture = new CompletableFuture<>();
 
     public RocksLocalCubicReader(Path srcDir) {
@@ -81,97 +72,102 @@ public class RocksLocalCubicReader extends BaseMinecraftReader<RocksLocalCubicDa
     @Override
     public void countInputChunks(Runnable increment) throws IOException, InterruptedException {
         try {
-            Map<Dimension, LongObjectMap<int[]>> dimensions = new ConcurrentHashMap<>();
-            this.saves.entrySet().parallelStream().forEach(entry -> {
-                if (!this.running) {
-                    throw new UncheckedInterruptedException();
-                }
+            CompletableFuture.allOf(this.saves.values().stream()
+                    .flatMap(storage -> Stream.of(
+                            CompletableFuture.runAsync(() -> {
+                                try {
+                                    storage.forEachColumn(pos -> {
+                                        if (!this.running) {
+                                            throw new UncheckedInterruptedException();
+                                        }
 
-                LongObjectMap<int[]> columns = dimensions.computeIfAbsent(entry.getKey(), dim -> new LongObjectScatterMap<>());
-                try {
-                    entry.getValue().forEachColumn(pos -> {
-                        if (!this.running) {
-                            throw new UncheckedInterruptedException();
-                        }
+                                        increment.run();
+                                    });
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            }),
+                            CompletableFuture.runAsync(() -> {
+                                try {
+                                    storage.forEachCube(pos -> {
+                                        if (!this.running) {
+                                            throw new UncheckedInterruptedException();
+                                        }
 
-                        if (columns.put(pack2d(pos.getX(), pos.getY()), new int[0]) == null) {
-                            increment.run();
-                        }
-                    });
-                    entry.getValue().forEachCube(pos -> {
-                        if (!this.running) {
-                            throw new UncheckedInterruptedException();
-                        }
+                                        increment.run();
+                                    });
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            })))
+                    .toArray(CompletableFuture[]::new))
+                    .join();
 
-                        long key = pack2d(pos.getX(), pos.getZ());
-                        int[] arr = columns.get(key);
-                        arr = arr != null ? Arrays.copyOf(arr, arr.length + 1) : new int[1];
-                        arr[arr.length - 1] = pos.getY();
-                        if (columns.put(key, arr) == null) {
-                            increment.run();
-                        }
-                    });
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-
-            this.countFuture.complete(dimensions);
+            this.countFuture.complete(null);
         } catch (UncheckedInterruptedException ignored) {
             //do nothing
         } catch (UncheckedIOException e) {
             throw e.getCause();
         } finally {
-            this.countFuture.complete(null);
+            this.countFuture.completeExceptionally(new IllegalStateException());
         }
     }
 
     @Override
     public void loadChunks(Consumer<? super RocksLocalCubicData> consumer, Predicate<Throwable> errorHandler) throws IOException, InterruptedException {
         try {
-            Map<Dimension, LongObjectMap<int[]>> dimensions = this.countFuture.join();
+            this.countFuture.join();
 
-            this.saves.entrySet().parallelStream().forEach(entry -> {
-                if (!this.running) {
-                    throw new UncheckedInterruptedException();
-                }
+            CompletableFuture.allOf(this.saves.entrySet().stream()
+                    .flatMap(entry -> {
+                        Dimension dim = entry.getKey();
+                        IBinaryCubeStorage storage = entry.getValue();
 
-                Dimension dim = entry.getKey();
-                IBinaryCubeStorage storage = entry.getValue();
-                LongObjectMap<int[]> columns = dimensions.get(dim);
+                        return Stream.of(
+                                CompletableFuture.runAsync(() -> {
+                                    try {
+                                        storage.forEachColumn((pos, data) -> {
+                                            if (!this.running) {
+                                                throw new UncheckedInterruptedException();
+                                            }
 
-                StreamSupport.stream(columns.spliterator(), true).forEach(cursor -> {
-                    if (!this.running) {
-                        throw new UncheckedInterruptedException();
-                    }
+                                            try {
+                                                consumer.accept(new RocksLocalCubicData(dim, new EntryLocation2D(pos.getX(), pos.getY()), data, Collections.emptyMap()));
+                                            } catch (Exception e) {
+                                                e.printStackTrace();
+                                                if (!errorHandler.test(e)) {
+                                                    throw new UncheckedInterruptedException();
+                                                }
+                                            }
+                                        });
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                }),
+                                CompletableFuture.runAsync(() -> {
+                                    try {
+                                        storage.forEachCube((pos, data) -> {
+                                            if (!this.running) {
+                                                throw new UncheckedInterruptedException();
+                                            }
 
-                    try {
-                        EntryLocation2D pos = unpack2d(cursor.key);
-                        int x = pos.getEntryX();
-                        int z = pos.getEntryZ();
+                                            consumer.accept(new RocksLocalCubicData(dim, new EntryLocation2D(pos.getX(), pos.getZ()), null, Collections.singletonMap(pos.getY(), data)));
+                                        });
+                                    } catch (IOException e) {
+                                        throw new UncheckedIOException(e);
+                                    }
+                                }));
+                    })
+                    .toArray(CompletableFuture[]::new))
+                    .join();
 
-                        IBinaryCubeStorage.BinaryBatch batch = storage.readBatch(new IBinaryCubeStorage.PosBatch(
-                                Collections.singleton(new Vector2i(x, z)),
-                                IntStream.of(cursor.value).mapToObj(y -> new Vector3i(x, y, z)).collect(Collectors.toSet())));
-
-                        consumer.accept(new RocksLocalCubicData(
-                                dim, pos,
-                                batch.columns.get(new Vector2i(x, z)),
-                                batch.cubes.entrySet().stream().collect(Collectors.toMap(e -> e.getKey().getY(), Map.Entry::getValue))));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        if (!errorHandler.test(e)) {
-                            throw new UncheckedInterruptedException();
-                        }
-                    }
-                });
-            });
+            this.loadFuture.complete(null);
         } catch (UncheckedInterruptedException ex) {
             // interrupted, do nothing
         } catch (UncheckedIOException e) {
             throw e.getCause();
         } finally {
-            this.loadFuture.complete(null);
+            this.loadFuture.completeExceptionally(new IllegalStateException());
         }
     }
 

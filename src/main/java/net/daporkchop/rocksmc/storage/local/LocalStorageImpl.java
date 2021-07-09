@@ -57,7 +57,7 @@ public class LocalStorageImpl implements IBinaryCubeStorage {
     protected final ColumnFamilyHandle cfHandleCubes;
 
     public LocalStorageImpl(Path path) throws IOException {
-        this.path = path.resolve("rocksmc_local");
+        this.path = path.toAbsolutePath().resolve("rocksmc_local");
 
         try {
             List<ColumnFamilyDescriptor> cfDescriptors = Arrays.asList(

@@ -32,7 +32,7 @@ public abstract class CCFormatChangingCopyEverythingExceptLevelInfoConverter<IN,
         try (InputStream in = Files.newInputStream(levelDat)) {
             nbt = Utils.readCompressedCC(in);
         }
-        nbt.getValue().put(new StringTag("storageFormat", this.newFormatName));
+        ((CompoundTag) nbt.getValue().get("data")).getValue().put(new StringTag("storageFormat", this.newFormatName));
         try (OutputStream out = Files.newOutputStream(levelDat)) {
             out.write(Utils.writeCompressed(nbt, false).array());
         }

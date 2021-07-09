@@ -71,60 +71,75 @@ public class RocksLocalVanillaReader extends BaseMinecraftReader<RocksLocalVanil
     @Override
     public void countInputChunks(Runnable increment) throws IOException, InterruptedException {
         try {
-            this.saves.values().parallelStream().forEach(storage -> {
-                if (!this.running) {
-                    throw new UncheckedInterruptedException();
-                }
+            CompletableFuture.allOf(this.saves.values().stream()
+                    .map(storage -> CompletableFuture.runAsync(() -> {
+                        try {
+                            storage.forEachColumn(pos -> {
+                                if (!this.running) {
+                                    throw new UncheckedInterruptedException();
+                                }
 
-                try {
-                    storage.forEachColumn(pos -> increment.run());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+                                increment.run();
+                            });
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    }))
+                    .toArray(CompletableFuture[]::new))
+                    .join();
+
+            this.countFuture.complete(null);
         } catch (UncheckedInterruptedException ignored) {
             //do nothing
         } catch (UncheckedIOException e) {
             throw e.getCause();
         } finally {
-            this.countFuture.complete(null);
+            this.countFuture.completeExceptionally(new IllegalStateException());
         }
     }
 
     @Override
     public void loadChunks(Consumer<? super RocksLocalVanillaColumnData> consumer, Predicate<Throwable> errorHandler) throws IOException, InterruptedException {
+
         try {
             this.countFuture.join();
 
-            this.saves.entrySet().parallelStream().forEach(entry -> {
-                Dimension dim = entry.getKey();
-                IBinaryCubeStorage storage = entry.getValue();
+            CompletableFuture.allOf(this.saves.entrySet().stream()
+                    .map(entry -> {
+                        Dimension dim = entry.getKey();
+                        IBinaryCubeStorage storage = entry.getValue();
 
-                try {
-                    storage.forEachColumn((pos, data) -> {
-                        if (!this.running) {
-                            throw new UncheckedInterruptedException();
-                        }
+                        return CompletableFuture.runAsync(() -> {
+                            try {
+                                storage.forEachColumn((pos, data) -> {
+                                    if (!this.running) {
+                                        throw new UncheckedInterruptedException();
+                                    }
 
-                        try {
-                            consumer.accept(new RocksLocalVanillaColumnData(dim, pos, data, this.offset));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            if (!errorHandler.test(e)) {
-                                throw new UncheckedInterruptedException();
+                                    try {
+                                        consumer.accept(new RocksLocalVanillaColumnData(dim, pos, data, this.offset));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        if (!errorHandler.test(e)) {
+                                            throw new UncheckedInterruptedException();
+                                        }
+                                    }
+                                });
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
                             }
-                        }
-                    });
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+                        });
+                    })
+                    .toArray(CompletableFuture[]::new))
+                    .join();
+
+            this.loadFuture.complete(null);
         } catch (UncheckedInterruptedException ex) {
             // interrupted, do nothing
         } catch (UncheckedIOException e) {
             throw e.getCause();
         } finally {
-            this.loadFuture.complete(null);
+            this.loadFuture.completeExceptionally(new IllegalStateException());
         }
     }
 
