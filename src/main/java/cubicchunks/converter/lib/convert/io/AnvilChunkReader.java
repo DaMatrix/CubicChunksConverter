@@ -37,12 +37,8 @@ import cubicchunks.regionlib.impl.header.TimestampHeaderEntryProvider;
 import cubicchunks.regionlib.impl.save.MinecraftSaveSection;
 import cubicchunks.regionlib.lib.provider.SimpleRegionProvider;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -62,16 +58,12 @@ public class AnvilChunkReader extends BaseMinecraftReader<AnvilChunkData, Minecr
         super(srcDir, (dim, path) -> exists(getDimensionPath(dim, path)) ? createSave(dim, path) : null);
         loadThread = Thread.currentThread();
 
-        int offset = 0;
-        File offsetFile = new File(srcDir.toFile(), "offset.txt");
-        if (offsetFile.exists())    {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(offsetFile), StandardCharsets.UTF_8))) {
-                offset = Integer.parseInt(reader.readLine());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            Path offsetFile = srcDir.resolve("offset.txt");
+            this.offset = Files.exists(offsetFile) ? Integer.parseInt(Files.readAllLines(offsetFile, StandardCharsets.UTF_8).get(0)) : 0;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        this.offset = offset;
     }
 
     private static MinecraftSaveSection createSave(Dimension dim, Path path) {

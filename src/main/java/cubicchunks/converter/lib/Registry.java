@@ -60,6 +60,13 @@ import cubicchunks.converter.lib.convert.nukkit2anvil.Nukkit2AnvilDataConverter;
 import cubicchunks.converter.lib.convert.nukkit2anvil.Nukkit2AnvilLevelInfoConverter;
 import cubicchunks.converter.lib.convert.robinton2cc.Robinton2CCConverter;
 import cubicchunks.converter.lib.convert.robinton2cc.Robinton2CCLevelInfoConverter;
+import net.daporkchop.rocksmc.converter.data.RocksLocalVanillaColumnData;
+import net.daporkchop.rocksmc.converter.dataconverter.Anvil2RocksLocalVanillaDataConverter;
+import net.daporkchop.rocksmc.converter.dataconverter.RocksLocalVanilla2AnvilDataConverter;
+import net.daporkchop.rocksmc.converter.infoconverter.Anvil2RocksLocalVanillaLevelInfoConverter;
+import net.daporkchop.rocksmc.converter.infoconverter.RocksLocalVanilla2AnvilLevelInfoConverter;
+import net.daporkchop.rocksmc.converter.io.RocksLocalVanillaReader;
+import net.daporkchop.rocksmc.converter.io.RocksLocalVanillaWriter;
 
 import java.nio.file.Path;
 import java.util.Objects;
@@ -90,19 +97,23 @@ public class Registry {
         registerReader("CubicChunks 1.10 - 1.12", "cubicchunks:1.10-1.12", CubicChunkReader::new, CubicChunksColumnData.class);
         registerReader("RobintonCubicChunks", "robinton_cubicchunks", RobintonChunkReader::new, RobintonColumnData.class);
         registerReader("CubicChunks 1.10 - 1.12 (BigCube)", "cubicchunks_bigcube:1.10-1.12", CubicChunksBigCube112Reader::new, CubicChunksBigCube112Data.class);
+        registerReader("RocksMC (Vanilla, Local)", "rocksmc:vanilla_local", RocksLocalVanillaReader::new, RocksLocalVanillaColumnData.class);
 
         registerWriter("Anvil (layered)", "anvil_layered", AnvilChunkWriter::new, MultilayerAnvilChunkData.class);
         registerWriter("Anvil", "anvil", SingleAnvilChunkWriter::new, AnvilChunkData.class);
         registerWriter("CubicChunks 1.10 - 1.12", "cubicchunks:1.10-1.12", CubicChunkWriter::new, CubicChunksColumnData.class);
         registerWriter("CubicChunks 1.17+ (ProtoBigCube)", "cubicchunks:1.17", CubicChunksProtoBigCubeWriter::new, CubicChunksProtoBigCubeData.class);
+        registerWriter("RocksMC (Vanilla, Local)", "rocksmc:vanilla_local", RocksLocalVanillaWriter::new, RocksLocalVanillaColumnData.class);
 
         registerConverter("Default", "default", Anvil2CCDataConverter::new, Anvil2CCLevelInfoConverter::new, AnvilChunkData.class, CubicChunksColumnData.class, Anvil2CCDataConverter.class);
         registerConverter("Default", "default", CC2AnvilDataConverter::new, CC2AnvilLevelInfoConverter::new, CubicChunksColumnData.class, MultilayerAnvilChunkData.class, CC2AnvilDataConverter.class);
         registerConverter("Relocating", "relocating", CC2CCRelocatingDataConverter::new, CC2CCRelocatingLevelInfoConverter::new, CC2CCRelocatingDataConverter::loadConfig, CubicChunksColumnData.class, CubicChunksColumnData.class, CC2CCRelocatingDataConverter.class);
         registerConverter("Default", "default", Robinton2CCConverter::new, Robinton2CCLevelInfoConverter::new, RobintonColumnData.class, CubicChunksColumnData.class, Robinton2CCConverter.class);
         registerConverter("Default", "default", Cc2BigCubeCcDataConverter::new, Cc2BigCubeCcLevelInfoConverter::new, CubicChunksBigCube112Data.class, CubicChunksProtoBigCubeData.class, Cc2BigCubeCcDataConverter.class);
-        registerConverter("Default", "default", Nukkit2AnvilDataConverter::new, Nukkit2AnvilLevelInfoConverter::new, AnvilChunkData.class, AnvilChunkData.class, Nukkit2AnvilDataConverter.class);
-        registerConverter("Default", "default", Anvil2NukkitDataConverter::new, Anvil2NukkitLevelInfoConverter::new, AnvilChunkData.class, AnvilChunkData.class, Anvil2NukkitDataConverter.class);
+        registerConverter("Nukkit2Anvil", "nukkit2anvil", Nukkit2AnvilDataConverter::new, Nukkit2AnvilLevelInfoConverter::new, AnvilChunkData.class, AnvilChunkData.class, Nukkit2AnvilDataConverter.class);
+        registerConverter("Anvil2Nukkit", "anvil2nukkit", Anvil2NukkitDataConverter::new, Anvil2NukkitLevelInfoConverter::new, AnvilChunkData.class, AnvilChunkData.class, Anvil2NukkitDataConverter.class);
+        registerConverter("Default", "default", Anvil2RocksLocalVanillaDataConverter::new, Anvil2RocksLocalVanillaLevelInfoConverter::new, AnvilChunkData.class, RocksLocalVanillaColumnData.class, Anvil2RocksLocalVanillaDataConverter.class);
+        registerConverter("Default", "default", RocksLocalVanilla2AnvilDataConverter::new, RocksLocalVanilla2AnvilLevelInfoConverter::new, RocksLocalVanillaColumnData.class, AnvilChunkData.class, RocksLocalVanilla2AnvilDataConverter.class);
     }
 
     // can't have all named register because of type erasure

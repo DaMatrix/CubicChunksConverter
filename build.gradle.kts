@@ -59,6 +59,7 @@ dependencies {
     compile("com.carrotsearch:hppc:0.8.1")
     compile("com.google.guava:guava:27.0.1-jre")
     compile("com.mojang:brigadier:1.0.17")
+    compile("org.rocksdb:rocksdbjni:6.20.3")
     compile(project(":nbt"))
     testCompile("junit:junit:4.11")
 }
